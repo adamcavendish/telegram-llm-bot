@@ -1,0 +1,19 @@
+# Git
+.git
+.gitignore
+
+# Rust build artifacts
+/target/
+
+# Editor configs
+.vscode/
+.idea/
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Miscellaneous
+*.md
+.env

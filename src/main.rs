@@ -47,20 +47,21 @@ impl BotConfig {
         let openai_api_base = env::var("OPENAI_API_BASE").expect("OPENAI_API_BASE must be set");
         let openai_model_name =
             env::var("OPENAI_MODEL_NAME").expect("OPENAI_MODEL_NAME must be set");
+        let openai_model_alias =
+            env::var("OPENAI_MODEL_ALIAS").unwrap_or(openai_model_name.clone());
         let openai_config = OpenAIConfig::new()
             .with_api_key(openai_api_key)
             .with_api_base(openai_api_base);
+        let openai_client = Arc::new(Client::with_config(openai_config));
 
-        // Get custom greeting message from environment variable or use default
+        // Bot info.
+        let bot_username = env::var("BOT_USERNAME").expect("BOT_USERNAME must be set");
         let greeting_message = env::var("BOT_GREETING_MESSAGE").unwrap_or_else(|_| {
             format!(
-                "Hello! I'm an AI assistant bot using {}. Mention me (@bot_username) in a message to talk to me.", 
-                openai_model_name
+                "Hello! I'm an AI assistant bot using {}. Mention me (@{}) in a message to talk to me.", 
+                openai_model_alias, bot_username,
             )
         });
-
-        // Initialize OpenAI client with config
-        let openai_client = Arc::new(Client::with_config(openai_config));
 
         Self {
             greeting_message,
@@ -171,6 +172,7 @@ async fn send_openai_request(
         )])
         .build()
         .map_err(|e| format!("Failed to build request: {}", e))?;
+    log::debug!("LLM request: {:?}", request);
 
     // Send the request to OpenAI
     let response = client
@@ -178,6 +180,7 @@ async fn send_openai_request(
         .create(request)
         .await
         .map_err(|e| format!("OpenAI API error: {:?}", e))?;
+    log::debug!("LLM response: {:?}", response);
 
     // Extract the response content
     if let Some(choice) = response.choices.first() {
